@@ -1,0 +1,88 @@
+---
+title: "Assignment4: Data Visualization"
+output: html_document
+date: "2022-10-07"
+---
+## Group 3, Team 11:
+
+* Robert Locher (5747465)
+* Jose Enrique Leal Castillo (9066381)
+* Niek Lieon (6520448)
+
+
+# 1.- "Good" data visualization"
+
+## Data Importing
+```{r}
+#Importing libraries to use
+library(tidyverse)
+
+
+#Reading dataset to use and saving it into a DataFrame variable
+data <- read_csv('planets.csv', show_col_types = FALSE)
+
+data
+
+```
+
+## Data Transformation
+```{r}
+#Creating density definition for planets
+planet_dis <- data %>% 
+  
+  mutate(
+    #Radius conversion from earth units to cm.
+    new_pl_rade = pl_rade * 6.38E+08,
+    #Mass conversion from earth units to gr.
+    new_pl_bmasse = pl_bmasse * 5.97E+27
+    ,
+    #Density calculation (assumming sphere volume formula = 4/3 * Pi* r3)
+    dens = new_pl_bmasse/((4/3)* 3.1416* (new_pl_rade*new_pl_rade*new_pl_rade))
+    ,
+    #Defining Rocky and Gas-Ice density threshold at 2.5 gr/cm3 (gassy and ice planets are oftenly less dense than rocky planets)
+    #Assumption gathered from https://en.wikipedia.org/wiki/Terrestrial_planet
+    planet_type = cut(dens, breaks = c(0, 2.5, 10000), 
+                       labels = c("Gas-Ice","Rocky")))  %>% 
+
+#Filtering na values
+filter(!is.na(dens)) 
+
+#Checking our results
+select(planet_dis,new_pl_bmasse,new_pl_rade,planet_type,dens)
+
+```
+## Data Visualization
+```{r}
+#Defining planets graph
+planets_graph <- 
+  
+  #Data to plot
+  ggplot(planet_dis, aes(x =sy_dist , y =pl_rade, color = planet_type)) +
+  #Scatterplot with alpha to see all points clearly
+  geom_point(alpha = .7) +
+  #Labels name
+  labs(x = "Distance from Earth [P.C.]", y = "Planet size[U.E.]", color = "Planet type:")+
+  #Straightening with log scales to avoid agglomeration
+  scale_x_log10()+
+  scale_y_log10()+
+  #Adding a light time to increase data/ ink ratio
+  theme_light()+
+  #Nice descriptive title
+  ggtitle("TESS discovered planets’ characteristics per year since 2018")+ 
+  
+  #Adding facet to include time factor in discoveries
+  facet_wrap( ~ disc_year  ) 
+
+#Plotting the final graph result  
+planets_graph
+```
+
+## Why is this graph good?
+This graph is good in our opinion because it represents a high quantity of data with low ink. 
+
+We can observe a nice correlation between the distance from earth and the size of the planets, indicating us good insights about how this telescope detection method might work. As well, we introduce the time factor divided by year with the use of facets. Meanwhile, a useful color helps us  to visualize better which type of planet was discovered by the Tess telescope.
+
+This plot uses a contrasting Hue to distinguish planet types which is one of the best ways to visualize categorical features according to Tamara Munzer. Finally, an important fact is that it uses the Tukey straightening approach in the scale of the axis to have a cleaner visualization of data.
+
+
+# 2.- "Bad" data visualization"
